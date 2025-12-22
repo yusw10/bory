@@ -11,6 +11,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Tuple
+from urllib.parse import urlparse
 
 
 @dataclass
@@ -51,7 +52,7 @@ def load_config(
 
     defaults = AppConfig()
 
-    return AppConfig(
+    config = AppConfig(
         dundam_base_url=_resolve_value(
             environment=environment,
             parser=parser,
@@ -84,6 +85,8 @@ def load_config(
         ),
         config_path_used=used_path,
     )
+    _validate_config(config)
+    return config
 
 
 def _determine_paths(
@@ -119,3 +122,17 @@ def _resolve_value(
     if parser.has_option("bory", key):
         return caster(parser.get("bory", key))
     return default
+
+
+def _validate_config(config: AppConfig) -> None:
+    if not config.dundam_base_url.strip():
+        raise ValueError("dundam_base_url must not be empty")
+    parsed = urlparse(config.dundam_base_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("dundam_base_url must include scheme and host (http or https)")
+    if not config.ocr_language.strip():
+        raise ValueError("ocr_language must not be empty")
+    if config.request_timeout <= 0:
+        raise ValueError("request_timeout must be positive")
+    if not 1 <= config.max_party_members <= 12:
+        raise ValueError("max_party_members must be between 1 to 12")
