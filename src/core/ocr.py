@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import tempfile
 from pathlib import Path
 
@@ -30,16 +31,9 @@ class OcrEngine:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         characters: list[CharacterInfo] = []
         for line in lines:
-            # 단순하게: "이름 직업 명성" 형태를 공백 기준으로 파싱
-            parts = line.split()
-            if not parts:
-                continue
-            name = parts[0]
-            job = parts[1] if len(parts) >= 2 else None
-            fame = None
-            if len(parts) >= 3 and parts[2].isdigit():
-                fame = int(parts[2])
-            characters.append(CharacterInfo(name=name, job=job, fame=fame))
+            info = self._parse_line(line)
+            if info:
+                characters.append(info)
         return characters
 
     def extract_characters_from_image(self, image: Image.Image) -> list[CharacterInfo]:
@@ -54,3 +48,42 @@ class OcrEngine:
         path = directory / "raid_snapshot.png"
         image.save(path)
         return path
+
+    def _parse_line(self, line: str) -> CharacterInfo | None:
+        normalized = self._normalize_line(line)
+        if not normalized:
+            return None
+
+        tokens = normalized.split()
+        if not tokens or tokens[0].isdigit():
+            return None
+
+        fame = self._extract_fame(normalized, tokens)
+
+        name = tokens[0]
+        job = " ".join(tokens[1:]) if len(tokens) > 1 else None
+        if job == "":
+            job = None
+        return CharacterInfo(name=name, job=job, fame=fame)
+
+    def _normalize_line(self, line: str) -> str:
+        line = line.replace("명성", " ").replace("Fame", " ")
+        line = re.sub(r"[|｜丨/\\\\]", " ", line)
+        line = re.sub(r"\s+", " ", line).strip()
+        return line
+
+    def _extract_fame(self, line: str, tokens: list[str]) -> int | None:
+        numbers = re.findall(r"\d[\d,]*", line)
+        if not numbers:
+            return None
+        fame_str = numbers[-1].replace(",", "")
+        try:
+            fame = int(fame_str)
+        except ValueError:
+            return None
+
+        for i in range(len(tokens) - 1, -1, -1):
+            if fame_str in tokens[i].replace(",", ""):
+                tokens.pop(i)
+                break
+        return fame
