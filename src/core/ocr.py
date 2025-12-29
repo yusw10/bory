@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import List
 
 import cv2
 import numpy as np
@@ -27,9 +26,9 @@ class OcrEngine:
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY)
         return pytesseract.image_to_string(thresh, lang=self.language)
 
-    def parse_characters(self, text: str) -> List[CharacterInfo]:
+    def parse_characters(self, text: str) -> list[CharacterInfo]:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
-        characters: List[CharacterInfo] = []
+        characters: list[CharacterInfo] = []
         for line in lines:
             # 단순하게: "이름 직업 명성" 형태를 공백 기준으로 파싱
             parts = line.split()
@@ -43,11 +42,13 @@ class OcrEngine:
             characters.append(CharacterInfo(name=name, job=job, fame=fame))
         return characters
 
-    def extract_characters_from_image(self, image: Image.Image) -> List[CharacterInfo]:
+    def extract_characters_from_image(self, image: Image.Image) -> list[CharacterInfo]:
         text = self.extract_text(image)
         return self.parse_characters(text)
 
-    def save_screenshot(self, image: Image.Image, directory: Path | None = None) -> Path:
+    def save_screenshot(
+        self, image: Image.Image, directory: Path | None = None
+    ) -> Path:
         directory = directory or Path(tempfile.gettempdir())
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / "raid_snapshot.png"

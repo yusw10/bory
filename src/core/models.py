@@ -1,25 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 
 @dataclass
 class CharacterInfo:
     name: str
-    job: Optional[str] = None
-    fame: Optional[int] = None
+    job: str | None = None
+    fame: int | None = None
 
 
 @dataclass
 class CharacterDamage:
     name: str
     damage: str
-    job: Optional[str] = None
-    fame: Optional[int] = None
+    job: str | None = None
+    fame: int | None = None
 
 
 @dataclass
 class RaidSnapshot:
-    characters: List[CharacterInfo]
-    screenshot_path: Optional[str] = None
+    characters: list[CharacterInfo]
+    screenshot_path: str | None = None

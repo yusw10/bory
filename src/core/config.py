@@ -4,13 +4,15 @@ This module centralizes configuration resolution from environment variables and
 optional INI files so that other components can depend on a single source of
 truth.
 """
+
 from __future__ import annotations
 
 import configparser
 import os
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, Tuple
+from typing import Any
 from urllib.parse import urlparse
 
 
@@ -25,7 +27,7 @@ class AppConfig:
     config_path_used: Path | None = None
 
 
-DEFAULT_CONFIG_PATHS: Tuple[Path, ...] = (
+DEFAULT_CONFIG_PATHS: tuple[Path, ...] = (
     Path("config.ini"),
     Path.home() / ".bory.ini",
 )
@@ -47,7 +49,9 @@ def load_config(
     environment = environ or os.environ
     parser = configparser.ConfigParser()
 
-    candidate_paths = _determine_paths(config_path=config_path, search_paths=search_paths)
+    candidate_paths = _determine_paths(
+        config_path=config_path, search_paths=search_paths
+    )
     used_path = _read_first_existing(parser, candidate_paths)
 
     defaults = AppConfig()
@@ -91,7 +95,7 @@ def load_config(
 
 def _determine_paths(
     *, config_path: str | Path | None, search_paths: Iterable[Path] | None
-) -> Tuple[Path, ...]:
+) -> tuple[Path, ...]:
     if config_path:
         return (Path(config_path).expanduser(),)
     if search_paths is not None:
@@ -99,7 +103,9 @@ def _determine_paths(
     return DEFAULT_CONFIG_PATHS
 
 
-def _read_first_existing(parser: configparser.ConfigParser, paths: Iterable[Path]) -> Path | None:
+def _read_first_existing(
+    parser: configparser.ConfigParser, paths: Iterable[Path]
+) -> Path | None:
     for path in paths:
         expanded = Path(path).expanduser()
         if expanded.is_file():

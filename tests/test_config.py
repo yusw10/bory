@@ -2,12 +2,13 @@ import os
 from pathlib import Path
 
 import pytest
-
 from src.core.config import AppConfig, load_config
 from src.core.container import create_container
 
 
-def test_load_config_prefers_env_over_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_load_config_prefers_env_over_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     config_file = tmp_path / "bory.ini"
     config_file.write_text(
         """

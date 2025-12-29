@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List
+from collections.abc import Iterable
 
 import requests
 from bs4 import BeautifulSoup
@@ -68,13 +68,17 @@ class DundamScraper:
             return match.group(1).replace(" ", "")
         return None
 
-    def fetch_character_damage(self, url: str, name: str, job: str | None = None) -> CharacterDamage:
+    def fetch_character_damage(
+        self, url: str, name: str, job: str | None = None
+    ) -> CharacterDamage:
         html = self.fetch_html(url)
         total_damage = self.parse_total_damage(html)
         return CharacterDamage(name=name, job=job, damage=total_damage)
 
-    def fetch_many(self, urls: Iterable[tuple[str, str, str | None]]) -> List[CharacterDamage]:
-        results: List[CharacterDamage] = []
+    def fetch_many(
+        self, urls: Iterable[tuple[str, str, str | None]]
+    ) -> list[CharacterDamage]:
+        results: list[CharacterDamage] = []
         for url, name, job in urls:
             results.append(self.fetch_character_damage(url, name, job))
         return results

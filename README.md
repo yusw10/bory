@@ -1,4 +1,4 @@
-# bory
+﻿# bory
 
 ## 개요
 던담(https://dundam.xyz)의 공대원 데미지(총딜)를 한 번에 확인하기 위한 Windows 데스크톱 도우미입니다. Python 3.11과 PySimpleGUI로 작성되며, 화면 캡쳐 → OCR → 던담 HTML 스크래핑 순으로 동작합니다.
@@ -14,6 +14,18 @@
 - UI 프레임워크: PySimpleGUI
 - OCR: OpenCV + Tesseract (시스템에 Tesseract OCR 실행 파일이 설치되어 있어야 합니다)
 - 배포: PyInstaller로 exe 번들링(옵션)
+## 개발 도구
+- 코드 포맷터: Black
+- 린터/정적 분석: Ruff
+
+설치:
+```bash
+pip install -r requirements-dev.txt
+```
+
+선정 이유:
+- Black: 설정이 거의 필요 없고 사실상 표준이라 팀 합의 비용이 낮습니다.
+- Ruff: 매우 빠르고 규칙 폭이 넓어 flake8/isort/pyupgrade 역할을 통합할 수 있습니다.
 
 ## 폴더 구조
 ```
@@ -62,3 +74,6 @@ tests/              # pytest 테스트
 - 던담 HTML 구조 변경 시 총딜 파싱이 실패할 수 있습니다. (정규식/텍스트 기반 백업 파서 사용)
 - OCR 품질은 화면 해상도/폰트/배경에 영향을 받습니다. 텍스트가 선명하게 보이도록 캡쳐하세요.
 - 네트워크 오류나 사이트 응답 지연 시 조회가 실패할 수 있으므로 UI 로그를 확인하세요.
+
+
+
