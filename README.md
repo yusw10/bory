@@ -1,7 +1,7 @@
 ﻿# bory
 
 ## 개요
-던담(https://dundam.xyz)의 공대원 데미지(총딜)를 한 번에 확인하기 위한 Windows 데스크톱 도우미입니다. Python 3.11과 PySimpleGUI로 작성되며, 화면 캡쳐 → OCR → 던담 HTML 스크래핑 순으로 동작합니다.
+던담(https://dundam.xyz)의 공대원 데미지(총딜)를 한 번에 확인하기 위한 Windows 데스크톱 도우미입니다. Python 3.11과 Tkinter로 작성되며, 화면 캡쳐 → OCR → 던담 HTML 스크래핑 순으로 동작합니다.
 
 ## 목표/기능 (1차)
 - **화면 캡쳐 & OCR**: 현재 화면을 캡쳐하고 Tesseract 기반 OCR로 공대원 텍스트를 추출합니다.
@@ -11,7 +11,7 @@
 ## 실행 환경
 - OS: Windows 10/11
 - 언어/런타임: Python 3.11
-- UI 프레임워크: PySimpleGUI
+- UI 프레임워크: Tkinter
 - OCR: OpenCV + Tesseract (시스템에 Tesseract OCR 실행 파일이 설치되어 있어야 합니다)
 - 배포: PyInstaller로 exe 번들링(옵션)
 ## 개발 도구
@@ -32,7 +32,7 @@ pip install -r requirements-dev.txt
 src/
   cli.py            # 엔트리포인트
   core/             # OCR/스크래퍼 등 도메인 로직
-  ui/               # PySimpleGUI 기반 UI
+  ui/               # Tkinter 기반 UI
   io/               # 캡쳐 유틸
 tests/              # pytest 테스트
 ```
@@ -64,10 +64,11 @@ tests/              # pytest 테스트
   ```
 
 ## 빌드/배포 (exe 생성)
-- PyInstaller 원파일 빌드 예시:
+- PyInstaller 원파일 빌드 예시(콘솔 숨김):
   ```bash
-  pyinstaller --onefile --name bory src/cli.py
+  pyinstaller --noconsole --onefile --name bory src/cli.py
   ```
+- 또는 `build.bat` 실행
 - 생성된 `dist/bory.exe` 또는 `dist/bory`를 실행합니다.
 
 ## 한계/주의사항

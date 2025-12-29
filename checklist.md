@@ -10,7 +10,7 @@
 
 ## 1. 프로젝트 설정
 - [x] 언어/런타임 확정(Python 3.11)
-- [x] UI 프레임워크 확정(PySimpleGUI)
+- [x] UI 프레임워크 확정(Tkinter)
 - [x] 기본 의존성 정의(requirements.txt)
 - [x] 코드 스타일/정적 분석 도구 설정(black, ruff 등)
 - [x] CI/자동화 테스트 워크플로 설계
@@ -41,7 +41,7 @@
 - [x] 코드 스타일/정적 분석 실행(black/ruff/mypy 등)
 
 ## 6. 빌드/배포
-- [ ] PyInstaller 빌드 스크립트/배치 파일 정리(build.bat 등)
+- [x] PyInstaller 빌드 스크립트/배치 파일 정리(build.bat 등)
 - [ ] 빌드 결과물(dist/bory.exe) 검증 체크리스트 작성
 - [ ] 배포 산출물/릴리즈 노트 템플릿 작성
 

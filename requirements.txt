@@ -1,9 +1,8 @@
-PySimpleGUI==4.60.5
 requests==2.32.3
 beautifulsoup4==4.12.3
-lxml==4.9.4
+lxml>=5.2.0
 pyautogui==0.9.54
 pytesseract==0.3.10
-opencv-python==4.9.0.80
-Pillow==10.3.0
+opencv-python>=4.10.0.84
+Pillow>=11.0.0
 pytest==8.2.2

@@ -28,7 +28,7 @@ class AppConfig:
     max_party_members: int = 12
     log_level: str = "ERROR"
     log_dir: Path = Path("logs")
-    log_to_console: bool = True
+    log_to_console: bool = False
     config_path_used: Path | None = None
 
 

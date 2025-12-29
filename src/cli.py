@@ -13,7 +13,11 @@ def run() -> None:
     container = create_container()
     log_path = configure_logging(container.config)
     logger.info("Logging to %s", log_path)
-    app_main(container.config)
+    try:
+        app_main(container.config)
+    except Exception:  # noqa: BLE001
+        logger.exception("Application crashed.")
+        raise
 
 
 if __name__ == "__main__":
