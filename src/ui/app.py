@@ -1,32 +1,43 @@
 from __future__ import annotations
 
+import logging
 import threading
 import urllib.parse
 from pathlib import Path
 
 import PySimpleGUI as sg
 
+from src.core.config import AppConfig
 from src.core.models import CharacterDamage, CharacterInfo, RaidSnapshot
 from src.core.ocr import OcrEngine
 from src.core.scraper import DundamScraper
 from src.io import capture
 
+logger = logging.getLogger(__name__)
+
 
 class RaidHelperApp:
-    def __init__(self) -> None:
-        self.ocr_engine = OcrEngine()
-        self.scraper = DundamScraper()
+    def __init__(self, config: AppConfig) -> None:
+        self.config = config
+        self.ocr_engine = OcrEngine(language=config.ocr_language)
+        self.scraper = DundamScraper(
+            request_timeout=config.request_timeout,
+            max_retries=config.request_max_retries,
+            retry_backoff=config.request_retry_backoff,
+        )
         self.snapshot: RaidSnapshot | None = None
         self.window = self._build_window()
 
     def _build_window(self) -> sg.Window:
         sg.theme("SystemDefault")
+        base_url = self.config.dundam_base_url.rstrip("/")
+        default_template = f"{base_url}/character?server=hilder&key={{name}}"
 
         layout = [
             [
                 sg.Text("던담 URL 템플릿", size=(15, 1)),
                 sg.InputText(
-                    "https://dundam.xyz/character?server=hilder&key={name}",
+                    default_template,
                     key="-URL-TEMPLATE-",
                     size=(60, 1),
                 ),
@@ -73,6 +84,7 @@ class RaidHelperApp:
     def _handle_capture(self) -> None:
         try:
             self._set_status("화면 캡쳐 중...")
+            logger.info("Starting capture.")
             image = capture.capture_fullscreen()
             screenshot_path = capture.save_image(
                 image, Path.cwd() / "artifacts" / "raid_snapshot.png"
@@ -88,18 +100,22 @@ class RaidHelperApp:
                     "OCR 결과가 비어 있습니다. 텍스트 영역이 잘 보이도록 다시 캡쳐하세요."
                 )
             self._set_status("캡쳐 완료")
+            logger.info("Capture completed with %s characters.", len(characters))
         except Exception as exc:  # noqa: BLE001
             self._set_status("캡쳐 실패")
             self._log(f"오류: {exc}")
+            logger.exception("Capture failed.")
 
     def _handle_fetch(self, values: dict) -> None:
         if not self.snapshot or not self.snapshot.characters:
             self._log("먼저 캡쳐를 수행해 캐릭터를 추출하세요.")
+            logger.warning("Fetch requested before capture.")
             return
 
         template = values.get("-URL-TEMPLATE-") or ""
         characters = list(self.snapshot.characters)
         self._set_status("데미지 조회 중...")
+        logger.info("Starting fetch for %s characters.", len(characters))
         threading.Thread(
             target=self._fetch_damage_async, args=(template, characters), daemon=True
         ).start()
@@ -118,12 +134,14 @@ class RaidHelperApp:
                 self._log(f"{info.name}: {result.damage}")
             except Exception as exc:  # noqa: BLE001
                 self._log(f"{info.name} 조회 실패: {exc}")
+                logger.warning("Fetch failed for %s: %s", info.name, exc)
 
         self.snapshot = RaidSnapshot(
             characters=characters, screenshot_path=self.snapshot.screenshot_path
         )
         self._update_table_from_damages(damages)
         self._set_status("조회 완료")
+        logger.info("Fetch completed with %s results.", len(damages))
 
     def _handle_reset(self) -> None:
         self.snapshot = None
@@ -152,8 +170,8 @@ class RaidHelperApp:
         log_elem.update(current + message + "\n")
 
 
-def main() -> None:
-    app = RaidHelperApp()
+def main(config: AppConfig | None = None) -> None:
+    app = RaidHelperApp(config or AppConfig())
     app.run()
 
 

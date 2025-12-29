@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 from collections.abc import Iterable
 
 import requests
@@ -16,13 +17,39 @@ class DundamScraper:
     - 네트워크 실패 시 requests 예외를 그대로 올리며, UI 계층에서 처리한다.
     """
 
-    def __init__(self, session: requests.Session | None = None) -> None:
+    def __init__(
+        self,
+        session: requests.Session | None = None,
+        *,
+        request_timeout: float = 10.0,
+        max_retries: int = 2,
+        retry_backoff: float = 0.5,
+    ) -> None:
         self.session = session or requests.Session()
+        self.request_timeout = request_timeout
+        self.max_retries = max_retries
+        self.retry_backoff = retry_backoff
 
     def fetch_html(self, url: str) -> str:
-        response = self.session.get(url, timeout=10)
-        response.raise_for_status()
-        return response.text
+        last_exc: requests.RequestException | None = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                response = self.session.get(url, timeout=self.request_timeout)
+                if response.status_code >= 500:
+                    raise requests.HTTPError(
+                        f"Server error: {response.status_code}", response=response
+                    )
+                response.raise_for_status()
+                return response.text
+            except requests.RequestException as exc:
+                last_exc = exc
+                status = getattr(exc.response, "status_code", None)
+                if status is not None and 400 <= status < 500:
+                    raise RuntimeError(f"요청 실패({status}): {url}") from exc
+                if attempt >= self.max_retries:
+                    break
+                time.sleep(self.retry_backoff * (2**attempt))
+        raise RuntimeError(f"요청 실패(재시도 초과): {url}") from last_exc
 
     def parse_total_damage(self, html: str) -> str:
         """HTML에서 '총딜' 키워드가 포함된 숫자/단위를 추출한다.

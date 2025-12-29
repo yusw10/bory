@@ -22,8 +22,13 @@ class AppConfig:
 
     dundam_base_url: str = "https://dundam.xyz"
     request_timeout: float = 5.0
+    request_max_retries: int = 2
+    request_retry_backoff: float = 0.5
     ocr_language: str = "ko"
     max_party_members: int = 12
+    log_level: str = "ERROR"
+    log_dir: Path = Path("logs")
+    log_to_console: bool = True
     config_path_used: Path | None = None
 
 
@@ -72,6 +77,22 @@ def load_config(
             default=defaults.request_timeout,
             caster=float,
         ),
+        request_max_retries=_resolve_value(
+            environment=environment,
+            parser=parser,
+            key="request_max_retries",
+            env_key="BORY_REQUEST_MAX_RETRIES",
+            default=defaults.request_max_retries,
+            caster=int,
+        ),
+        request_retry_backoff=_resolve_value(
+            environment=environment,
+            parser=parser,
+            key="request_retry_backoff",
+            env_key="BORY_REQUEST_RETRY_BACKOFF",
+            default=defaults.request_retry_backoff,
+            caster=float,
+        ),
         ocr_language=_resolve_value(
             environment=environment,
             parser=parser,
@@ -86,6 +107,29 @@ def load_config(
             env_key="BORY_MAX_PARTY_MEMBERS",
             default=defaults.max_party_members,
             caster=int,
+        ),
+        log_level=_resolve_value(
+            environment=environment,
+            parser=parser,
+            key="log_level",
+            env_key="BORY_LOG_LEVEL",
+            default=defaults.log_level,
+        ),
+        log_dir=_resolve_value(
+            environment=environment,
+            parser=parser,
+            key="log_dir",
+            env_key="BORY_LOG_DIR",
+            default=defaults.log_dir,
+            caster=Path,
+        ),
+        log_to_console=_resolve_value(
+            environment=environment,
+            parser=parser,
+            key="log_to_console",
+            env_key="BORY_LOG_TO_CONSOLE",
+            default=defaults.log_to_console,
+            caster=_parse_bool,
         ),
         config_path_used=used_path,
     )
@@ -130,6 +174,15 @@ def _resolve_value(
     return default
 
 
+def _parse_bool(value: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"Expected boolean value, got '{value}'")
+
+
 def _validate_config(config: AppConfig) -> None:
     if not config.dundam_base_url.strip():
         raise ValueError("dundam_base_url must not be empty")
@@ -140,5 +193,17 @@ def _validate_config(config: AppConfig) -> None:
         raise ValueError("ocr_language must not be empty")
     if config.request_timeout <= 0:
         raise ValueError("request_timeout must be positive")
+    if config.request_max_retries < 0:
+        raise ValueError("request_max_retries must be zero or positive")
+    if config.request_retry_backoff < 0:
+        raise ValueError("request_retry_backoff must be zero or positive")
     if not 1 <= config.max_party_members <= 12:
         raise ValueError("max_party_members must be between 1 to 12")
+    if not str(config.log_dir).strip():
+        raise ValueError("log_dir must not be empty")
+    level = config.log_level.strip().upper()
+    if level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+        raise ValueError(
+            "log_level must be one of DEBUG, INFO, WARNING, ERROR, CRITICAL"
+        )
+    config.log_level = level
